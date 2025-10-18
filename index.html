@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="description" content="Cognitive Supermarket - Game rèn luyện nhận thức và trí nhớ không gian 3D">
+    <meta name="theme-color" content="#667eea">
+    
+    <title>🏪 Cognitive Supermarket - Siêu Thị Nhận Thức</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🏪</text></svg>">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="css/theme.css">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+    <!-- Preloader -->
+    <div id="preloader" class="preloader">
+        <div class="preloader-content">
+            <div class="preloader-logo">
+                <span class="preloader-icon">🏪</span>
+                <div class="preloader-rings">
+                    <div class="ring ring-1"></div>
+                    <div class="ring ring-2"></div>
+                    <div class="ring ring-3"></div>
+                </div>
+            </div>
+            <h2 class="preloader-title">Cognitive Supermarket</h2>
+            <div class="preloader-progress">
+                <div class="progress-bar">
+                    <div class="progress-fill"></div>
+                </div>
+                <span class="progress-text">Đang tải... <span id="loadPercent">0</span>%</span>
+            </div>
+            <div class="loading-tips">
+                <p id="loadingTip" class="tip-text">💡 Mẹo: Di chuyển nhanh hơn bằng cách giữ Shift</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Game Container -->
+    <div id="gameContainer" class="game-container">
+        <!-- Three.js Canvas -->
+        <canvas id="gameCanvas" class="game-canvas"></canvas>
+        
+        <!-- Game UI Overlay -->
+        <div id="gameUI" class="game-ui">
+            
+            <!-- Top HUD -->
+            <div class="hud-top">
+                <!-- Mission Bar -->
+                <div class="mission-bar" id="missionBar">
+                    <div class="mission-badge">
+                        <span class="mission-level">LV.<span id="currentLevel">1</span></span>
+                    </div>
+                    <div class="mission-content">
+                        <div class="mission-title">NHIỆM VỤ HIỆN TẠI</div>
+                        <div class="mission-objective">
+                            <span class="mission-icon" id="missionIcon">🍎</span>
+                            <span class="mission-text" id="missionText">Tìm 3 quả táo đỏ</span>
+                        </div>
+                        <div class="mission-progress">
+                            <div class="progress-bar-mini">
+                                <div class="progress-fill-mini" id="missionProgress" style="width: 0%"></div>
+                            </div>
+                            <span class="progress-count" id="progressCount">0/3</span>
+                        </div>
+                    </div>
+                    <div class="mission-reward">
+                        <span class="reward-icon">🏆</span>
+                        <span class="reward-points">+<span id="rewardPoints">100</span></span>
+                    </div>
+                </div>
+
+                <!-- Score Panel -->
+                <div class="score-panel" id="scorePanel">
+                    <div class="score-item score-main">
+                        <div class="score-icon">⭐</div>
+                        <div class="score-info">
+                            <div class="score-label">Điểm số</div>
+                            <div class="score-value" id="gameScore">0</div>
+                        </div>
+                    </div>
+                    <div class="score-item">
+                        <div class="score-icon">⏱️</div>
+                        <div class="score-info">
+                            <div class="score-label">Thời gian</div>
+                            <div class="score-value" id="gameTimer">00:00</div>
+                        </div>
+                    </div>
+                    <div class="score-item">
+                        <div class="score-icon">🎯</div>
+                        <div class="score-info">
+                            <div class="score-label">Combo</div>
+                            <div class="score-value">x<span id="comboMultiplier">1</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom HUD -->
+            <div class="hud-bottom">
+                <!-- Mobile Controls -->
+                <div class="mobile-controls" id="mobileControls">
+                    <!-- Movement Joystick -->
+                    <div class="joystick-container" id="movementJoystick">
+                        <div class="joystick-base">
+                            <div class="joystick-stick" id="joystickStick"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="action-buttons">
+                        <button class="action-btn btn-jump" id="btnJump">
+                            <span class="btn-icon">⬆️</span>
+                            <span class="btn-label">Nhảy</span>
+                        </button>
+                        <button class="action-btn btn-run" id="btnRun">
+                            <span class="btn-icon">💨</span>
+                            <span class="btn-label">Chạy</span>
+                        </button>
+                        <button class="action-btn btn-interact" id="btnInteract">
+                            <span class="btn-icon">✋</span>
+                            <span class="btn-label">Nhặt</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Inventory Bar -->
+                <div class="inventory-bar" id="inventoryBar">
+                    <div class="inventory-title">Túi đồ</div>
+                    <div class="inventory-slots">
+                        <div class="inventory-slot" data-slot="1">
+                            <div class="slot-item"></div>
+                            <span class="slot-count">0</span>
+                        </div>
+                        <div class="inventory-slot" data-slot="2">
+                            <div class="slot-item"></div>
+                            <span class="slot-count">0</span>
+                        </div>
+                        <div class="inventory-slot" data-slot="3">
+                            <div class="slot-item"></div>
+                            <span class="slot-count">0</span>
+                        </div>
+                        <div class="inventory-slot" data-slot="4">
+                            <div class="slot-item"></div>
+                            <span class="slot-count">0</span>
+                        </div>
+                        <div class="inventory-slot" data-slot="5">
+                            <div class="slot-item"></div>
+                            <span class="slot-count">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="quick-stats">
+                    <div class="stat-item">
+                        <div class="stat-icon">❤️</div>
+                        <div class="stat-bar">
+                            <div class="stat-fill health-fill" style="width: 100%"></div>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-icon">⚡</div>
+                        <div class="stat-bar">
+                            <div class="stat-fill energy-fill" style="width: 100%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Minimap -->
+            <div class="minimap-container" id="minimapContainer">
+                <div class="minimap-header">
+                    <span class="minimap-title">Bản đồ</span>
+                    <button class="minimap-toggle" id="minimapToggle">◀</button>
+                </div>
+                <canvas id="minimapCanvas" class="minimap-canvas"></canvas>
+                <div class="minimap-legend">
+                    <div class="legend-item">
+                        <span class="legend-color player"></span>
+                        <span class="legend-label">Bạn</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color objective"></span>
+                        <span class="legend-label">Mục tiêu</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notifications Container -->
+            <div class="notifications-container" id="notificationsContainer"></div>
+
+            <!-- Combo Display -->
+            <div class="combo-display" id="comboDisplay" style="display: none;">
+                <div class="combo-text">COMBO</div>
+                <div class="combo-number">x<span id="comboNumber">2</span></div>
+                <div class="combo-bar">
+                    <div class="combo-fill" id="comboFill"></div>
+                </div>
+            </div>
+
+            <!-- Achievement Popup -->
+            <div class="achievement-popup" id="achievementPopup" style="display: none;">
+                <div class="achievement-icon">🏆</div>
+                <div class="achievement-content">
+                    <h3 class="achievement-title" id="achievementTitle">Thành tựu mở khóa!</h3>
+                    <p class="achievement-desc" id="achievementDesc">Bạn đã hoàn thành xuất sắc</p>
+                </div>
+                <div class="achievement-points">+<span id="achievementPoints">500</span> XP</div>
+            </div>
+        </div>
+
+        <!-- Main Menu -->
+        <div id="mainMenu" class="main-menu">
+            <div class="menu-background">
+                <div class="bg-gradient"></div>
+                <div class="bg-pattern"></div>
+                <div class="floating-items">
+                    <span class="float-item item-1">🍎</span>
+                    <span class="float-item item-2">🥛</span>
+                    <span class="float-item item-3">🍞</span>
+                    <span class="float-item item-4">🥕</span>
+                    <span class="float-item item-5">🧀</span>
+                    <span class="float-item item-6">🥚</span>
+                </div>
+            </div>
+            
+            <div class="menu-content">
+                <div class="game-logo">
+                    <div class="logo-icon">🏪</div>
+                    <h1 class="game-title">Cognitive Supermarket</h1>
+                    <p class="game-subtitle">Rèn luyện trí nhớ & định hướng không gian</p>
+                </div>
+
+                <div class="menu-buttons">
+                    <button class="menu-btn btn-primary" id="btnStartGame">
+                        <span class="btn-icon">▶️</span>
+                        <span class="btn-text">Chơi Ngay</span>
+                    </button>
+                    <button class="menu-btn btn-secondary" id="btnTutorial">
+                        <span class="btn-icon">📖</span>
+                        <span class="btn-text">Hướng Dẫn</span>
+                    </button>
+                    <button class="menu-btn btn-secondary" id="btnSettings">
+                        <span class="btn-icon">⚙️</span>
+                        <span class="btn-text">Cài Đặt</span>
+                    </button>
+                    <button class="menu-btn btn-secondary" id="btnLeaderboard">
+                        <span class="btn-icon">🏆</span>
+                        <span class="btn-text">Bảng Xếp Hạng</span>
+                    </button>
+                </div>
+
+                <div class="menu-footer">
+                    <div class="social-links">
+                        <a href="#" class="social-link">📱</a>
+                        <a href="#" class="social-link">💬</a>
+                        <a href="#" class="social-link">📧</a>
+                    </div>
+                    <p class="copyright">© 2024 Cognitive Games. v1.0.0</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Modal -->
+        <div id="settingsModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title">⚙️ Cài Đặt</h2>
+                    <button class="modal-close" id="closeSettings">✕</button>
+                </div>
+                <div class="modal-body">
+                    <!-- Graphics Settings -->
+                    <div class="settings-section">
+                        <h3 class="section-title">🎨 Đồ Họa</h3>
+                        <div class="setting-item">
+                            <label class="setting-label">Chất lượng</label>
+                            <select class="setting-select" id="graphicsQuality">
+                                <option value="low">Thấp</option>
+                                <option value="medium" selected>Trung bình</option>
+                                <option value="high">Cao</option>
+                                <option value="ultra">Siêu cao</option>
+                            </select>
+                        </div>
+                        <div class="setting-item">
+                            <label class="setting-label">Bóng đổ</label>
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="shadowToggle" checked>
+                                <label for="shadowToggle" class="toggle-label"></label>
+                            </div>
+                        </div>
+                        <div class="setting-item">
+                            <label class="setting-label">Hiệu ứng hạt</label>
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="particleToggle" checked>
+                                <label for="particleToggle" class="toggle-label"></label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Audio Settings -->
+                    <div class="settings-section">
+                        <h3 class="section-title">🔊 Âm Thanh</h3>
+                        <div class="setting-item">
+                            <label class="setting-label">Nhạc nền</label>
+                            <input type="range" class="setting-slider" id="musicVolume" min="0" max="100" value="70">
+                            <span class="slider-value">70%</span>
+                        </div>
+                        <div class="setting-item">
+                            <label class="setting-label">Hiệu ứng</label>
+                            <input type="range" class="setting-slider" id="sfxVolume" min="0" max="100" value="80">
+                            <span class="slider-value">80%</span>
+                        </div>
+                    </div>
+
+                    <!-- Control Settings -->
+                    <div class="settings-section">
+                        <h3 class="section-title">🎮 Điều Khiển</h3>
+                        <div class="setting-item">
+                            <label class="setting-label">Độ nhạy chuột</label>
+                            <input type="range" class="setting-slider" id="mouseSensitivity" min="1" max="10" value="5">
+                            <span class="slider-value">5</span>
+                        </div>
+                        <div class="setting-item">
+                            <label class="setting-label">Đảo ngược trục Y</label>
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="invertY">
+                                <label for="invertY" class="toggle-label"></label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-save" id="saveSettings">Lưu Cài Đặt</button>
+                    <button class="btn-cancel" id="cancelSettings">Hủy</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tutorial Modal -->
+        <div id="tutorialModal" class="modal" style="display: none;">
+            <div class="modal-content modal-large">
+                <div class="modal-header">
+                    <h2 class="modal-title">📖 Hướng Dẫn Chơi</h2>
+                    <button class="modal-close" id="closeTutorial">✕</button>
+                </div>
+                <div class="modal-body">
+                    <div class="tutorial-tabs">
+                        <button class="tab-btn active" data-tab="controls">Điều Khiển</button>
+                        <button class="tab-btn" data-tab="objectives">Mục Tiêu</button>
+                        <button class="tab-btn" data-tab="tips">Mẹo Chơi</button>
+                    </div>
+                    
+                    <div class="tutorial-content">
+                        <div class="tab-content active" id="tab-controls">
+                            <h3>🎮 Điều Khiển Cơ Bản</h3>
+                            <div class="control-grid">
+                                <div class="control-item">
+                                    <div class="control-key">W A S D</div>
+                                    <div class="control-desc">Di chuyển nhân vật</div>
+                                </div>
+                                <div class="control-item">
+                                    <div class="control-key">SHIFT</div>
+                                    <div class="control-desc">Chạy nhanh</div>
+                                </div>
+                                <div class="control-item">
+                                    <div class="control-key">SPACE</div>
+                                    <div class="control-desc">Nhảy</div>
+                                </div>
+                                <div class="control-item">
+                                    <div class="control-key">E</div>
+                                    <div class="control-desc">Nhặt vật phẩm</div>
+                                </div>
+                                <div class="control-item">
+                                    <div class="control-key">MOUSE</div>
+                                    <div class="control-desc">Xoay camera</div>
+                                </div>
+                                <div class="control-item">
+                                    <div class="control-key">TAB</div>
+                                    <div class="control-desc">Mở bản đồ lớn</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="tab-content" id="tab-objectives">
+                            <h3>🎯 Mục Tiêu Game</h3>
+                            <ul class="objective-list">
+                                <li>Thu thập các vật phẩm theo yêu cầu của nhiệm vụ</li>
+                                <li>Hoàn thành càng nhanh để nhận điểm thưởng</li>
+                                <li>Duy trì combo để nhân điểm</li>
+                                <li>Mở khóa các khu vực mới của siêu thị</li>
+                                <li>Đạt điểm cao nhất trong bảng xếp hạng</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="tab-content" id="tab-tips">
+                            <h3>💡 Mẹo Chơi Hay</h3>
+                            <div class="tips-grid">
+                                <div class="tip-card">
+                                    <div class="tip-icon">🗺️</div>
+                                    <div class="tip-text">Sử dụng minimap để định vị nhanh</div>
+                                </div>
+                                <div class="tip-card">
+                                    <div class="tip-icon">🏃</div>
+                                    <div class="tip-text">Chạy nhanh giữa các kệ hàng để tiết kiệm thời gian</div>
+                                </div>
+                                <div class="tip-card">
+                                    <div class="tip-icon">🎯</div>
+                                    <div class="tip-text">Thu thập liên tục để duy trì combo</div>
+                                </div>
+                                <div class="tip-card">
+                                    <div class="tip-icon">🧠</div>
+                                    <div class="tip-text">Ghi nhớ vị trí các loại hàng hóa</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pause Menu -->
+        <div id="pauseMenu" class="pause-menu" style="display: none;">
+            <div class="pause-content">
+                <h2 class="pause-title">⏸️ Tạm Dừng</h2>
+                <div class="pause-buttons">
+                    <button class="pause-btn" id="resumeGame">▶️ Tiếp Tục</button>
+                    <button class="pause-btn" id="restartLevel">🔄 Chơi Lại</button>
+                    <button class="pause-btn" id="pauseSettings">⚙️ Cài Đặt</button>
+                    <button class="pause-btn" id="quitToMenu">🏠 Menu Chính</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Level Complete Screen -->
+        <div id="levelComplete" class="level-complete" style="display: none;">
+            <div class="complete-content">
+                <div class="complete-header">
+                    <div class="star-rating">
+                        <span class="star star-1">⭐</span>
+                        <span class="star star-2">⭐</span>
+                        <span class="star star-3">⭐</span>
+                    </div>
+                    <h2 class="complete-title">Hoàn Thành Xuất Sắc!</h2>
+                </div>
+                
+                <div class="score-summary">
+                    <div class="summary-item">
+                        <span class="summary-label">Điểm số:</span>
+                        <span class="summary-value" id="finalScore">0</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Thời gian:</span>
+                        <span class="summary-value" id="finalTime">00:00</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Combo tối đa:</span>
+                        <span class="summary-value" id="maxCombo">x1</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Điểm thưởng:</span>
+                        <span class="summary-value bonus" id="bonusPoints">+0</span>
+                    </div>
+                </div>
+                
+                <div class="complete-buttons">
+                    <button class="complete-btn btn-next" id="nextLevel">
+                        Cấp Tiếp Theo ➡️
+                    </button>
+                    <button class="complete-btn btn-replay" id="replayLevel">
+                        Chơi Lại 🔄
+                    </button>
+                    <button class="complete-btn btn-menu" id="backToMenu">
+                        Menu Chính 🏠
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
